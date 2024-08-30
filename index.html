@@ -1,85 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Web Group</title>
-<style>
-  body {
-    font-family: sans-serif;
-  }
+    <title>ওয়েব গ্রুপ</title>
+    <style>
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+        }
 
-  #messages {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-bottom: 10px;
-    height: 200px;
-    overflow-y: auto;
-  }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #eee;
+        }
 
-  #messages p {
-    margin: 5px 0;
-  }
+        .message {
+            margin-bottom: 5px;
+            padding: 8px;
+            border-radius: 3px;
+        }
 
-  #message-form {
-    display: flex;
-  }
+        .message.self {
+            background-color: #e0f7fa; /* Light blue for self messages */
+            text-align: right;
+        }
 
-  #message {
-    flex-grow: 1;
-    padding: 5px;
-    margin-right: 5px;
-  }
-
-  #message-form button {
-    padding: 5px 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-</style>
+        .message.other {
+            background-color: #f5f5f5; /* Light gray for other messages */
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-  <h1>Web Group</h1>
-  <div id="messages">
-    <!-- Messages will be displayed here -->
-  </div>
+    <div class="container">
+        <h1>ওয়েব গ্রুপ</h1>
+        <div id="messages"></div>
 
-  <form id="message-form">
-    <input type="text" id="message" placeholder="Enter your message...">
-    <button type="submit">Send</button>
-  </form>
+        <input type="text" id="messageInput" placeholder="আপনার ম্যাসেজ লিখুন...">
+        <button id="sendButton">পাঠান</button>
+    </div>
 
-  <script>
-    const messagesContainer = document.getElementById('messages');
-    const messageForm = document.getElementById('message-form');
-    const messageInput = document.getElementById('message');
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
 
-    let users = {}; // Object to store user IDs
+        let userId = localStorage.getItem('userId');
+        if (!userId) {
+            userId = Math.random().toString(36).substr(2, 9); // Generate a unique ID
+            localStorage.setItem('userId', userId);
+        }
 
-    messageForm.addEventListener('submit', (event) => {
-      event.preventDefault();
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value;
+            if (message.trim() !== '') {
+                displayMessage(message, 'self'); // Display as self message
+                messageInput.value = ''; // Clear the input
+                // Here you would typically send the message to a server using WebSocket or AJAX
+            }
+        });
 
-      const message = messageInput.value.trim();
+        function displayMessage(message, type) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', type);
+            messageElement.textContent = `${userId}: ${message}`;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to bottom
+        }
 
-      if (message) {
-        // Generate a unique ID if the user doesn't have one
-        let userId = users[localStorage.getItem('userName')] || generateId();
-        users[localStorage.getItem('userName')] = userId;
-        localStorage.setItem('userName', userId);
-
-        // Display the message with the user ID
-        const messageElement = document.createElement('p');
-        messageElement.textContent = [${userId}]: ${message};
-        messagesContainer.appendChild(messageElement);
-
-        // Clear the input field
-        messageInput.value = '';
-      }
-    });
-
-    function generateId() {
-      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    }
-  </script>
+        // Simulate receiving messages from others (replace with actual server communication)
+        setInterval(() => {
+            const randomMessage = `অন্য ব্যবহারকারী থেকে ম্যাসেজ ${Math.random().toString(36).substr(2, 5)}`;
+            displayMessage(randomMessage, 'other');
+        }, 5000); // Every 5 seconds
+    </script>
 </body>
 </html>
