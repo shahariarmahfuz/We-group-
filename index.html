@@ -1,83 +1,105 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ওয়েব গ্রুপ</title>
+    <title>গ্রুপ চ্যাট (সার্ভার ছাড়া)</title>
     <style>
-        .container {
+        .chat-container {
             width: 80%;
+            max-width: 600px;
             margin: 20px auto;
             border: 1px solid #ccc;
-            padding: 20px;
             border-radius: 5px;
+            overflow: hidden;
         }
 
-        #messages {
+        .chat-header {
+            background-color: #f0f0f0;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .chat-messages {
             height: 300px;
             overflow-y: auto;
-            margin-bottom: 10px;
             padding: 10px;
-            border: 1px solid #eee;
         }
 
-        .message {
-            margin-bottom: 5px;
+        .chat-message {
+            margin-bottom: 10px;
+        }
+
+        .chat-message .user {
+            font-weight: bold;
+        }
+
+        .chat-input {
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        #message-input {
+            width: 80%;
             padding: 8px;
+            border: 1px solid #ccc;
             border-radius: 3px;
         }
 
-        .message.self {
-            background-color: #e0f7fa; /* Light blue for self messages */
-            text-align: right;
-        }
-
-        .message.other {
-            background-color: #f5f5f5; /* Light gray for other messages */
-            text-align: left;
+        #send-button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>ওয়েব গ্রুপ</h1>
-        <div id="messages"></div>
-
-        <input type="text" id="messageInput" placeholder="আপনার ম্যাসেজ লিখুন...">
-        <button id="sendButton">পাঠান</button>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>গ্রুপ চ্যাট</h2>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            </div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="আপনার মেসেজ লিখুন...">
+            <button id="send-button">পাঠান</button>
+        </div>
     </div>
 
     <script>
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
+        const userId = localStorage.getItem('userId') || Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('userId', userId);
 
-        let userId = localStorage.getItem('userId');
-        if (!userId) {
-            userId = Math.random().toString(36).substr(2, 9); // Generate a unique ID
-            localStorage.setItem('userId', userId);
-        }
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        // স্থানীয় স্টোরেজ থেকে মেসেজ লোড করুন
+        const messages = JSON.parse(localStorage.getItem('messages')) || [];
+        messages.forEach(data => displayMessage(data));
 
         sendButton.addEventListener('click', () => {
             const message = messageInput.value;
             if (message.trim() !== '') {
-                displayMessage(message, 'self'); // Display as self message
-                messageInput.value = ''; // Clear the input
-                // Here you would typically send the message to a server using WebSocket or AJAX
+                const data = { userId, message };
+                messages.push(data);
+                localStorage.setItem('messages', JSON.stringify(messages));
+                displayMessage(data);
+                messageInput.value = '';
             }
         });
 
-        function displayMessage(message, type) {
+        function displayMessage(data) {
             const messageElement = document.createElement('div');
-            messageElement.classList.add('message', type);
-            messageElement.textContent = `${userId}: ${message}`;
-            messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to bottom
+            messageElement.classList.add('chat-message');
+            messageElement.innerHTML = `
+                <span class="user">${data.userId}:</span> 
+                <span class="message">${data.message}</span>
+            `;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; 
         }
-
-        // Simulate receiving messages from others (replace with actual server communication)
-        setInterval(() => {
-            const randomMessage = `অন্য ব্যবহারকারী থেকে ম্যাসেজ ${Math.random().toString(36).substr(2, 5)}`;
-            displayMessage(randomMessage, 'other');
-        }, 5000); // Every 5 seconds
     </script>
 </body>
 </html>
