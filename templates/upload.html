@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Profile Picture</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            font-family: 'Arial', sans-serif;
+        }
+        .upload-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            width: 360px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .upload-container:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .upload-container h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        .avatar-preview {
+            display: block;
+            margin: 20px auto;
+            border-radius: 50%;
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            background-color: #e9ecef;
+            border: 2px solid #ddd;
+            transition: border-color 0.3s;
+        }
+        .avatar-preview:hover {
+            border-color: #007bff;
+        }
+        .custom-file-upload {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #0056b3;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .custom-file-upload input[type="file"] {
+            display: none;
+        }
+        .upload-container::before {
+            content: '\f083';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            font-size: 50px;
+            color: #007bff;
+            display: block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h2>Upload Your Profile Picture</h2>
+        <form id="upload-form">
+            <label for="profile_picture" class="custom-file-upload">
+                <i class="fas fa-upload"></i> Choose File
+                <input type="file" id="profile_picture" accept="image/*" required>
+            </label>
+            <img id="avatar-preview" class="avatar-preview" src="" alt="Profile Picture Preview">
+            <button type="submit" class="btn btn-primary btn-block">Upload</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/compressorjs/dist/compressor.min.js"></script>
+    <script>
+        document.getElementById('profile_picture').addEventListener('change', function(event) {
+            var file = event.target.files[0];
+            if (file) {
+                new Compressor(file, {
+                    quality: 0.6,
+                    maxWidth: 140,
+                    maxHeight: 140,
+                    success(result) {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.getElementById('avatar-preview').src = e.target.result;
+                        };
+                        reader.readAsDataURL(result);
+                    },
+                    error(err) {
+                        console.error(err.message);
+                    }
+                });
+            }
+        });
+
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var file = document.getElementById('profile_picture').files[0];
+            if (file) {
+                new Compressor(file, {
+                    quality: 0.6,
+                    maxWidth: 140,
+                    maxHeight: 140,
+                    success(result) {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            localStorage.setItem('profile_picture', e.target.result);
+                            window.location.href = '/groups';
+                        };
+                        reader.readAsDataURL(result);
+                    },
+                    error(err) {
+                        console.error(err.message);
+                    }
+                });
+            }
+        });
+
+        // Prevent re-upload by checking localStorage
+        if (localStorage.getItem('profile_picture')) {
+            window.location.href = '/groups';
+        }
+    </script>
+</body>
+</html>
