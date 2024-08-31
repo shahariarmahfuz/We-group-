@@ -2,13 +2,9 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
 from os import environ
 from collections import deque
-import eventlet
-
-# Monkey patch to support WebSocket transport
-eventlet.monkey_patch()
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")  # Add cors_allowed_origins for development
 
 users = {}
 groups = {}
