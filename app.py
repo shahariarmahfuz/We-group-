@@ -2,6 +2,10 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
 from os import environ
 from collections import deque
+import eventlet
+
+# Monkey patch to make sure eventlet works with the standard libraries
+eventlet.monkey_patch()
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -99,4 +103,5 @@ def handle_message(data):
     emit('broadcast message', {'user_id': user_id, 'user_name': user_name, 'message': message, 'profile_picture': profile_picture, 'group_id': group_id}, broadcast=True)
 
 if __name__ == '__main__':
+    # Use eventlet to run the server
     socketio.run(app, host='0.0.0.0', port=int(environ.get('PORT', 5000)), debug=True)
