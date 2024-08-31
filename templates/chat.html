@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #e9ecef;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-width: 900px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .chat-container:hover {
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            transform: translateY(-5px);
+        }
+
+        #chat-box {
+            flex: 1;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .user-message {
+            flex-direction: row-reverse;
+        }
+
+        .other-message {
+            flex-direction: row;
+        }
+
+        .message .avatar {
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            object-fit: cover;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .message-content {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            max-width: 80%;
+            position: relative;
+            animation: slideIn 0.5s ease;
+        }
+
+        .user-message .message-content {
+            background-color: #e3f2fd;
+        }
+
+        .other-message .message-content {
+            background-color: #ffffff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .message-content::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            border: 10px solid transparent;
+            margin-top: -5px;
+        }
+
+        .user-message .message-content::after {
+            right: -10px;
+            border-right-color: #e3f2fd;
+        }
+
+        .other-message .message-content::after {
+            left: -10px;
+            border-left-color: #ffffff;
+        }
+
+        .message-content strong {
+            color: #007bff;
+        }
+
+        .message-content p {
+            margin: 0;
+        }
+
+        .message-content img {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .message-input {
+            padding: 12px;
+            border-top: 1px solid #dee2e6;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 -1px 10px rgba(0,0,0,0.1);
+        }
+
+        .message-input input[type="file"] {
+            display: none;
+        }
+
+        .message-input .upload-btn {
+            background: #007bff;
+            color: #fff;
+            border-radius: 50%;
+            padding: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .message-input .upload-btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+
+        .message-input textarea {
+            border: 1px solid #ced4da;
+            padding: 12px;
+            border-radius: 12px;
+            background-color: #ffffff;
+            flex: 1;
+            resize: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .message-input textarea:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 4px rgba(0,123,255,0.5);
+        }
+
+        .message-input .send-btn {
+            border-radius: 50%;
+            padding: 12px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .message-input .send-btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chat-box">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="message-input">
+            <label for="file-upload" class="upload-btn"><i class="fas fa-image"></i></label>
+            <input type="file" id="file-upload" accept="image/*" />
+            <textarea id="message" class="form-control" placeholder="Enter your message" rows="2"></textarea>
+            <button id="send-btn" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var userName = localStorage.getItem('user_name');
+            var userId = localStorage.getItem('user_id');
+            var profilePicture = localStorage.getItem('profile_picture') || 'default-avatar.png';
+            var groupId = window.location.pathname.split('/').pop(); // Get the group ID from the URL
+
+            if (!userName || !userId) {
+                window.location.href = '/';
+                return;
+            }
+
+            var socket = io();
+
+            // Fetch last 100 messages when page loads
+            $.get('/get-messages/' + groupId, function(messages) {
+                messages.forEach(function(data) {
+                    var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
+                    $('#chat-box').append(
+                        '<div class="message ' + messageClass + '">' +
+                            '<img class="avatar" src="' + data.profile_picture + '" />' +
+                            '<div class="message-content">' +
+                                '<strong>' + data.user_name + ':</strong>' +
+                                data.message +
+                            '</div>' +
+                        '</div>'
+                    );
+                });
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            });
+
+            $('#send-btn').click(function() {
+                var message = $('#message').val();
+                if (message) {
+                    socket.emit('message', {
+                        user_id: userId,
+                        user_name: userName,
+                        message: message,
+                        profile_picture: profilePicture,
+                        group_id: groupId
+                    });
+                    $('#message').val('');
+                }
+            });
+
+            $('#file-upload').change(function(event) {
+                var file = event.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var fileUrl = e.target.result;
+                        var fileElement = '<img src="' + fileUrl + '" />';
+                        socket.emit('message', {
+                            user_id: userId,
+                            user_name: userName,
+                            message: fileElement,
+                            profile_picture: profilePicture,
+                            group_id: groupId
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            socket.on('broadcast message', function(data) {
+                var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
+
+                if (data.group_id === groupId) {
+                    $('#chat-box').append(
+                        '<div class="message ' + messageClass + '">' +
+                            '<img class="avatar" src="' + data.profile_picture + '" />' +
+                            '<div class="message-content">' +
+                                '<strong>' + data.user_name + ':</strong>' +
+                                data.message +
+                            '</div>' +
+                        '</div>'
+                    );
+                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
