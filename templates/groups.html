@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groups</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            padding: 30px;
+            max-width: 800px;
+            margin: auto;
+        }
+        .group-list, .form-group {
+            margin-bottom: 20px;
+        }
+        .group-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background-color: #ffffff;
+            transition: box-shadow 0.3s;
+        }
+        .group-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .form-control {
+            border-radius: 10px;
+            border-color: #ced4da;
+        }
+        .btn-primary {
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #007bff;
+            border-color: #007bff;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn-icon {
+            margin-right: 8px;
+        }
+        .form-group {
+            position: relative;
+        }
+        .form-group .form-control {
+            padding-left: 40px;
+        }
+        .form-group .form-icon {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            color: #007bff;
+        }
+        .hr-divider {
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4 text-center">Manage Your Groups</h1>
+        <div class="group-list">
+            <h3>My Groups (First 3)</h3>
+            <div id="my-groups">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+        <div class="group-list">
+            <h3>All Active Groups</h3>
+            <div id="all-groups">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+        <div class="form-group">
+            <i class="fas fa-users form-icon"></i>
+            <input type="text" id="create-group-name" class="form-control" placeholder="Enter group name" required>
+        </div>
+        <div class="form-group">
+            <i class="fas fa-id-card form-icon"></i>
+            <input type="text" id="create-group-id" class="form-control" placeholder="Enter unique group ID" required>
+        </div>
+        <button id="create-group-btn" class="btn btn-primary btn-block"><i class="fas fa-plus btn-icon"></i>Create Group</button>
+        <div class="hr-divider"></div>
+        <div class="form-group">
+            <i class="fas fa-key form-icon"></i>
+            <input type="text" id="join-group-id" class="form-control" placeholder="Enter group ID to join" required>
+        </div>
+        <button id="join-group-btn" class="btn btn-primary btn-block"><i class="fas fa-sign-in-alt btn-icon"></i>Join Group</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Function to fetch and display groups
+            function fetchGroups() {
+                $.get('/get-groups', function(response) {
+                    $('#my-groups').empty();
+                    $('#all-groups').empty();
+
+                    // Display user's own groups (first 3)
+                    response.my_groups.forEach(group => {
+                        $('#my-groups').append('<div class="group-item">' + group.name + '</div>');
+                    });
+
+                    // Display all active groups
+                    response.all_groups.forEach(group => {
+                        $('#all-groups').append('<div class="group-item">' + group.name + '</div>');
+                    });
+                });
+            }
+
+            fetchGroups(); // Initial fetch
+
+            $('#create-group-btn').click(function() {
+                var groupName = $('#create-group-name').val();
+                var groupId = $('#create-group-id').val();
+                if (groupName && groupId) {
+                    $.post('/create-group', { group_name: groupName, group_id: groupId }, function(response) {
+                        alert(response.message);
+                        if (response.success) {
+                            window.location.href = '/chat/' + groupId;
+                        }
+                    });
+                }
+            });
+
+            $('#join-group-btn').click(function() {
+                var groupId = $('#join-group-id').val();
+                if (groupId) {
+                    window.location.href = '/chat/' + groupId;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
