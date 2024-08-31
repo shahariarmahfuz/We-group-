@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #e9ecef;
+            font-family: 'Arial', sans-serif;
+        }
+        .login-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 350px;
+            max-width: 90%;
+            text-align: center;
+        }
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+        .form-control {
+            border-radius: 25px;
+            border: 1px solid #ced4da;
+            padding: 15px;
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.25);
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            border-radius: 25px;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2><i class="fas fa-user-circle"></i> Login</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <input type="text" class="form-control" id="user_name" placeholder="Enter your name" required>
+            </div>
+            <div class="form-group">
+                <input type="text" class="form-control" id="user_id" placeholder="Enter your unique ID" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var userName = document.getElementById('user_name').value;
+            var userId = document.getElementById('user_id').value;
+
+            if (userName && userId) {
+                localStorage.setItem('user_name', userName);
+                localStorage.setItem('user_id', userId);
+                window.location.href = '/upload';
+            }
+        });
+
+        if (localStorage.getItem('user_name') && localStorage.getItem('user_id')) {
+            window.location.href = '/upload';
+        }
+    </script>
+</body>
+</html>
