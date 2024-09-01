@@ -1,6 +1,5 @@
 Flask
 Flask-SocketIO
 python-socketio
-python-engineio
-simple-websocket
 eventlet
+Werkzeug
