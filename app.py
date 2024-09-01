@@ -12,7 +12,7 @@ user_groups = {}
 group_messages = {}  # Dictionary to store messages for each group
 
 # Keep the last 100 messages for each group
-MESSAGE_LIMIT = 100
+MESSAGE_LIMIT = 10
 
 @app.route('/')
 def login():
