@@ -218,9 +218,7 @@
                 return;
             }
 
-            var socket = io({
-                transports: ['polling']  // Force transport to polling
-            });
+            var socket = io();
 
             // Fetch last 100 messages when page loads
             $.get('/get-messages/' + groupId, function(messages) {
@@ -274,16 +272,19 @@
 
             socket.on('message', function(data) {
                 var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
-                $('#chat-box').append(
-                    '<div class="message ' + messageClass + '">' +
-                        '<img class="avatar" src="' + data.profile_picture + '" />' +
-                        '<div class="message-content">' +
-                            '<strong>' + data.user_name + ':</strong> ' +
-                            data.message +
-                        '</div>' +
-                    '</div>'
-                );
-                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+                if (data.group_id === groupId) {
+                    $('#chat-box').append(
+                        '<div class="message ' + messageClass + '">' +
+                            '<img class="avatar" src="' + data.profile_picture + '" />' +
+                            '<div class="message-content">' +
+                                '<strong>' + data.user_name + ':</strong>' +
+                                data.message +
+                            '</div>' +
+                        '</div>'
+                    );
+                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                }
             });
         });
     </script>
