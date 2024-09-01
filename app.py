@@ -2,12 +2,11 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
 from os import environ
 from collections import deque
-import eventlet
-
-eventlet.monkey_patch()  # Important for compatibility with eventlet
 
 app = Flask(__name__)
-socketio = SocketIO(app, async_mode='eventlet')  # Set async_mode to 'eventlet'
+
+# Configure Socket.IO to use long-polling
+socketio = SocketIO(app, cors_allowed_origins="*", transports=['polling'])
 
 users = {}
 groups = {}
@@ -99,13 +98,7 @@ def handle_message(data):
         'group_id': group_id
     })
 
-    emit('broadcast message', {
-        'user_id': user_id, 
-        'user_name': user_name, 
-        'message': message, 
-        'profile_picture': profile_picture, 
-        'group_id': group_id
-    }, broadcast=True)
+    emit('broadcast message', {'user_id': user_id, 'user_name': user_name, 'message': message, 'profile_picture': profile_picture, 'group_id': group_id}, broadcast=True)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=int(environ.get('PORT', 5000)), debug=True)
