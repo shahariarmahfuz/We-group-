@@ -160,86 +160,90 @@
             border: 1px solid #ced4da;
             padding: 12px;
             border-radius: 12px;
-            background-color: #ffffff;
+            background-color: #f8f9fa;
             flex: 1;
             resize: none;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
         }
 
         .message-input textarea:focus {
             border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 4px rgba(0,123,255,0.5);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.2);
         }
 
-        .message-input .send-btn {
-            border-radius: 50%;
-            padding: 12px;
+        .message-input button {
             background-color: #007bff;
+            color: #ffffff;
             border: none;
-            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 16px;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        .message-input .send-btn:hover {
+        .message-input button:hover {
             background-color: #0056b3;
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
+
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div id="chat-box">
-            <!-- Messages will be appended here -->
+            <!-- Messages will be appended here dynamically -->
         </div>
         <div class="message-input">
-            <label for="file-upload" class="upload-btn"><i class="fas fa-image"></i></label>
-            <input type="file" id="file-upload" accept="image/*" />
-            <textarea id="message" class="form-control" placeholder="Enter your message" rows="2"></textarea>
-            <button id="send-btn" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+            <label for="file-upload" class="upload-btn"><i class="fas fa-paperclip"></i></label>
+            <input type="file" id="file-upload">
+            <textarea id="message" rows="1" placeholder="Type your message here..."></textarea>
+            <button id="send" class="btn btn-primary">Send</button>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         $(document).ready(function() {
-            var userName = localStorage.getItem('user_name');
+            var socket = io.connect('http://' + document.domain + ':' + location.port);
             var userId = localStorage.getItem('user_id');
-            var profilePicture = localStorage.getItem('profile_picture') || 'default-avatar.png';
-            var groupId = window.location.pathname.split('/').pop(); // Get the group ID from the URL
+            var userName = localStorage.getItem('user_name');
+            var profilePicture = localStorage.getItem('profile_picture');
+            var groupId = "{{ group_id }}";
 
-            if (!userName || !userId) {
-                window.location.href = '/';
-                return;
+            function scrollToBottom() {
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
             }
 
-            var socket = io();
-
-            // Fetch last 100 messages when page loads
+            // Load previous messages for the group
             $.get('/get-messages/' + groupId, function(messages) {
-                messages.forEach(function(data) {
-                    var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
-                    $('#chat-box').append(
-                        '<div class="message ' + messageClass + '">' +
-                            '<img class="avatar" src="' + data.profile_picture + '" />' +
-                            '<div class="message-content">' +
-                                '<strong>' + data.user_name + ':</strong>' +
-                                data.message +
-                            '</div>' +
-                        '</div>'
-                    );
+                messages.forEach(function(message) {
+                    addMessageToChat(message.user_name, message.message, message.profile_picture, message.user_id === userId);
                 });
-                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                scrollToBottom();
             });
 
-            $('#send-btn').click(function() {
+            function addMessageToChat(userName, message, profilePicture, isCurrentUser) {
+                var messageClass = isCurrentUser ? 'user-message' : 'other-message';
+                var messageHtml = `
+                    <div class="message ${messageClass}">
+                        <img src="/uploads/${profilePicture}" alt="Avatar" class="avatar">
+                        <div class="message-content">
+                            <strong>${userName}</strong>
+                            <p>${message}</p>
+                        </div>
+                    </div>
+                `;
+                $('#chat-box').append(messageHtml);
+            }
+
+            $('#send').click(function() {
                 var message = $('#message').val();
-                if (message) {
+                if (message.trim() !== '') {
                     socket.emit('message', {
                         user_id: userId,
                         user_name: userName,
@@ -251,39 +255,17 @@
                 }
             });
 
-            $('#file-upload').change(function(event) {
-                var file = event.target.files[0];
-                if (file) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var fileUrl = e.target.result;
-                        var fileElement = '<img src="' + fileUrl + '" />';
-                        socket.emit('message', {
-                            user_id: userId,
-                            user_name: userName,
-                            message: fileElement,
-                            profile_picture: profilePicture,
-                            group_id: groupId
-                        });
-                    };
-                    reader.readAsDataURL(file);
+            $('#message').keypress(function(e) {
+                if (e.which == 13 && !e.shiftKey) {
+                    $('#send').click();
+                    e.preventDefault();
                 }
             });
 
             socket.on('broadcast message', function(data) {
-                var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
-
                 if (data.group_id === groupId) {
-                    $('#chat-box').append(
-                        '<div class="message ' + messageClass + '">' +
-                            '<img class="avatar" src="' + data.profile_picture + '" />' +
-                            '<div class="message-content">' +
-                                '<strong>' + data.user_name + ':</strong>' +
-                                data.message +
-                            '</div>' +
-                        '</div>'
-                    );
-                    $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+                    addMessageToChat(data.user_name, data.message, data.profile_picture, data.user_id === userId);
+                    scrollToBottom();
                 }
             });
         });
