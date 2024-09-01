@@ -204,9 +204,7 @@
         </div>
     </div>
 
-    <!-- Load Socket.IO from a CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
-    <!-- Load jQuery from a CDN -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
@@ -221,7 +219,7 @@
             }
 
             var socket = io({
-                transports: ['polling'] // Use long-polling transport as fallback
+                transports: ['polling']  // Force transport to polling
             });
 
             // Fetch last 100 messages when page loads
@@ -260,21 +258,18 @@
                 if (file) {
                     var reader = new FileReader();
                     reader.onload = function(e) {
-                        socket.emit('image', {
+                        var fileUrl = e.target.result;
+                        var fileElement = '<img src="' + fileUrl + '" />';
+                        socket.emit('message', {
                             user_id: userId,
                             user_name: userName,
-                            image: e.target.result,
+                            message: fileElement,
                             profile_picture: profilePicture,
                             group_id: groupId
                         });
                     };
                     reader.readAsDataURL(file);
-                    $('#file-upload').val('');
                 }
-            });
-
-            socket.on('connect', function() {
-                socket.emit('join', { group_id: groupId });
             });
 
             socket.on('message', function(data) {
@@ -283,33 +278,12 @@
                     '<div class="message ' + messageClass + '">' +
                         '<img class="avatar" src="' + data.profile_picture + '" />' +
                         '<div class="message-content">' +
-                            '<strong>' + data.user_name + ':</strong>' +
-                            '<p>' + data.message + '</p>' +
+                            '<strong>' + data.user_name + ':</strong> ' +
+                            data.message +
                         '</div>' +
                     '</div>'
                 );
                 $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
-            });
-
-            socket.on('image', function(data) {
-                var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
-                $('#chat-box').append(
-                    '<div class="message ' + messageClass + '">' +
-                        '<img class="avatar" src="' + data.profile_picture + '" />' +
-                        '<div class="message-content">' +
-                            '<strong>' + data.user_name + ':</strong>' +
-                            '<img src="' + data.image + '" alt="Image" />' +
-                        '</div>' +
-                    '</div>'
-                );
-                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
-            });
-
-            $('#message').keypress(function(event) {
-                if (event.which == 13 && !event.shiftKey) {
-                    event.preventDefault();
-                    $('#send-btn').click();
-                }
             });
         });
     </script>
