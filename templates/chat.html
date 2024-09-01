@@ -160,90 +160,90 @@
             border: 1px solid #ced4da;
             padding: 12px;
             border-radius: 12px;
-            background-color: #f8f9fa;
+            background-color: #ffffff;
             flex: 1;
             resize: none;
-            outline: none;
-            transition: all 0.3s ease;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .message-input textarea:focus {
             border-color: #007bff;
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.2);
+            outline: none;
+            box-shadow: 0 0 4px rgba(0,123,255,0.5);
         }
 
-        .message-input button {
+        .message-input .send-btn {
+            border-radius: 50%;
+            padding: 12px;
             background-color: #007bff;
-            color: #ffffff;
             border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
+            color: white;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 20px;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        .message-input button:hover {
+        .message-input .send-btn:hover {
             background-color: #0056b3;
-            transform: scale(1.05);
+            transform: scale(1.1);
         }
-
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div id="chat-box">
-            <!-- Messages will be appended here dynamically -->
+            <!-- Messages will be appended here -->
         </div>
         <div class="message-input">
-            <label for="file-upload" class="upload-btn"><i class="fas fa-paperclip"></i></label>
-            <input type="file" id="file-upload">
-            <textarea id="message" rows="1" placeholder="Type your message here..."></textarea>
-            <button id="send" class="btn btn-primary">Send</button>
+            <label for="file-upload" class="upload-btn"><i class="fas fa-image"></i></label>
+            <input type="file" id="file-upload" accept="image/*" />
+            <textarea id="message" class="form-control" placeholder="Enter your message" rows="2"></textarea>
+            <button id="send-btn" class="send-btn"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <!-- Load Socket.IO from a CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+    <!-- Load jQuery from a CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            var socket = io.connect('http://' + document.domain + ':' + location.port);
-            var userId = localStorage.getItem('user_id');
             var userName = localStorage.getItem('user_name');
-            var profilePicture = localStorage.getItem('profile_picture');
-            var groupId = "{{ group_id }}";
+            var userId = localStorage.getItem('user_id');
+            var profilePicture = localStorage.getItem('profile_picture') || 'default-avatar.png';
+            var groupId = window.location.pathname.split('/').pop(); // Get the group ID from the URL
 
-            function scrollToBottom() {
-                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            if (!userName || !userId) {
+                window.location.href = '/';
+                return;
             }
 
-            // Load previous messages for the group
-            $.get('/get-messages/' + groupId, function(messages) {
-                messages.forEach(function(message) {
-                    addMessageToChat(message.user_name, message.message, message.profile_picture, message.user_id === userId);
-                });
-                scrollToBottom();
+            var socket = io({
+                transports: ['polling'] // Use long-polling transport as fallback
             });
 
-            function addMessageToChat(userName, message, profilePicture, isCurrentUser) {
-                var messageClass = isCurrentUser ? 'user-message' : 'other-message';
-                var messageHtml = `
-                    <div class="message ${messageClass}">
-                        <img src="/uploads/${profilePicture}" alt="Avatar" class="avatar">
-                        <div class="message-content">
-                            <strong>${userName}</strong>
-                            <p>${message}</p>
-                        </div>
-                    </div>
-                `;
-                $('#chat-box').append(messageHtml);
-            }
+            // Fetch last 100 messages when page loads
+            $.get('/get-messages/' + groupId, function(messages) {
+                messages.forEach(function(data) {
+                    var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
+                    $('#chat-box').append(
+                        '<div class="message ' + messageClass + '">' +
+                            '<img class="avatar" src="' + data.profile_picture + '" />' +
+                            '<div class="message-content">' +
+                                '<strong>' + data.user_name + ':</strong>' +
+                                data.message +
+                            '</div>' +
+                        '</div>'
+                    );
+                });
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            });
 
-            $('#send').click(function() {
+            $('#send-btn').click(function() {
                 var message = $('#message').val();
-                if (message.trim() !== '') {
+                if (message) {
                     socket.emit('message', {
                         user_id: userId,
                         user_name: userName,
@@ -255,17 +255,60 @@
                 }
             });
 
-            $('#message').keypress(function(e) {
-                if (e.which == 13 && !e.shiftKey) {
-                    $('#send').click();
-                    e.preventDefault();
+            $('#file-upload').change(function(event) {
+                var file = event.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        socket.emit('image', {
+                            user_id: userId,
+                            user_name: userName,
+                            image: e.target.result,
+                            profile_picture: profilePicture,
+                            group_id: groupId
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                    $('#file-upload').val('');
                 }
             });
 
-            socket.on('broadcast message', function(data) {
-                if (data.group_id === groupId) {
-                    addMessageToChat(data.user_name, data.message, data.profile_picture, data.user_id === userId);
-                    scrollToBottom();
+            socket.on('connect', function() {
+                socket.emit('join', { group_id: groupId });
+            });
+
+            socket.on('message', function(data) {
+                var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
+                $('#chat-box').append(
+                    '<div class="message ' + messageClass + '">' +
+                        '<img class="avatar" src="' + data.profile_picture + '" />' +
+                        '<div class="message-content">' +
+                            '<strong>' + data.user_name + ':</strong>' +
+                            '<p>' + data.message + '</p>' +
+                        '</div>' +
+                    '</div>'
+                );
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            });
+
+            socket.on('image', function(data) {
+                var messageClass = (data.user_id === userId) ? 'user-message' : 'other-message';
+                $('#chat-box').append(
+                    '<div class="message ' + messageClass + '">' +
+                        '<img class="avatar" src="' + data.profile_picture + '" />' +
+                        '<div class="message-content">' +
+                            '<strong>' + data.user_name + ':</strong>' +
+                            '<img src="' + data.image + '" alt="Image" />' +
+                        '</div>' +
+                    '</div>'
+                );
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+            });
+
+            $('#message').keypress(function(event) {
+                if (event.which == 13 && !event.shiftKey) {
+                    event.preventDefault();
+                    $('#send-btn').click();
                 }
             });
         });
